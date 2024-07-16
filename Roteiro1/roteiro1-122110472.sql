@@ -19,7 +19,7 @@ CREATE TABLE segurado(
   endereco_do_segurado VARCHAR(255),
   data_de_nascimento_do_segurado DATE,
   automovel_segurado CHAR(17), -- FK
-  id_do_seguro SERIAL, -- FK
+  id_do_seguro INTEGER, -- FK
   data_de_vinculo DATE,
   data_de_termino DATE
 );
@@ -73,8 +73,8 @@ CREATE TABLE reparo(
   id_do_reparo SERIAL, -- PK
   automovel_reparado CHAR(17), -- FK
   cnpj_da_oficina CHAR(14), -- FK
-  id_da_pericia SERIAL, -- FK
-  id_do_sinistro SERIAL, -- FK
+  id_da_pericia INTEGER, -- FK
+  id_do_sinistro INTEGER, -- FK
   data_do_reparo TIMESTAMP
 );
 
@@ -193,7 +193,7 @@ CREATE TABLE segurado(
   endereco_do_segurado VARCHAR(255),
   data_de_nascimento_do_segurado DATE,
   automovel_segurado CHAR(17) NOT NULL,
-  id_do_seguro SERIAL NOT NULL,
+  id_do_seguro INTEGER NOT NULL,
   data_de_vinculo DATE,
   data_de_termino DATE,
   CONSTRAINT segurado_automovel_segurado_fkey FOREIGN KEY (automovel_segurado) REFERENCES automovel(chassi_do_automovel),
@@ -224,8 +224,8 @@ CREATE TABLE reparo(
   id_do_reparo SERIAL NOT NULL PRIMARY KEY,
   automovel_reparado CHAR(17) NOT NULL,
   cnpj_da_oficina CHAR(14) NOT NULL,
-  id_da_pericia SERIAL NOT NULL,
-  id_do_sinistro SERIAL NOT NULL,
+  id_da_pericia INTEGER NOT NULL,
+  id_do_sinistro INTEGER NOT NULL,
   data_do_reparo TIMESTAMP,
   CONSTRAINT reparo_automovel_reparado_fkey FOREIGN KEY (automovel_reparado) REFERENCES automovel(chassi_do_automovel),
   CONSTRAINT reparo_cnpj_da_oficina_fkey FOREIGN KEY (cnpj_da_oficina) REFERENCES oficina(cnpj_da_oficina),
