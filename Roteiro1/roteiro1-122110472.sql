@@ -1,6 +1,6 @@
 -- QUESTÃO 1 E 2
 
--- Tabela do automovel: chassi, placa, modelo, marca e ano
+-- Tabela do automovel: chassi, placa, modelo, marca, ano e o id do seu seguro
 CREATE TABLE automovel(
   chassi_do_automovel CHAR(17), -- PK
   placa_do_automovel CHAR(7),
@@ -9,26 +9,19 @@ CREATE TABLE automovel(
   ano_do_automovel INTEGER
 );
 
--- Tabela do segurado: nome, cpf, telefone, endereço, data de nascimento, chassi
--- do automovel segurado, id do seguro escolhido, data de vinculo e data de 
--- vencimento do seguro
+-- Tabela do segurado: cpf, nome, telefone, endereço e data de nascimento
 CREATE TABLE segurado(
-  nome_do_segurado VARCHAR(255),
   cpf_do_segurado CHAR(11), -- PK
+  nome_do_segurado VARCHAR(255),
   telefone_do_segurado VARCHAR(15),
   endereco_do_segurado VARCHAR(255),
-  data_de_nascimento_do_segurado DATE,
-  automovel_segurado CHAR(17), -- FK
-  id_do_seguro INTEGER, -- FK
-  data_de_vinculo DATE,
-  data_de_termino DATE
+  data_de_nascimento_do_segurado DATE
 );
 
--- Tabela do perito: cpf, nome e oficina na qual ele presta o serviço
+-- Tabela do perito: cpf e nome
 CREATE TABLE perito(
   cpf_do_perito CHAR(11), -- PK
-  nome_do_perito VARCHAR(255),
-  cnpj_da_oficina CHAR(14) -- FK
+  nome_do_perito VARCHAR(255)
 );
 
 -- Tabela da oficina: cnpj, nome e endereço
@@ -38,44 +31,48 @@ CREATE TABLE oficina(
   endereco_da_oficina VARCHAR(255)
 );
 
--- Tabela do seguro: id, tipo de plano e valor
+-- Tabela do seguro: id, tipo de plano, valor, data de inicio, data de término,
+-- segurado que possui o seguro e o automovel segurado
 CREATE TABLE seguro(
   id_do_seguro SERIAL, -- PK
   tipo_de_plano_do_seguro VARCHAR(255),
-  valor_do_seguro NUMERIC
+  valor_do_seguro NUMERIC,
+  data_de_inicio DATE,
+  data_de_termino DATE,
+  segurado CHAR(11), -- FK
+  automovel CHAR(17) -- FK
 );
 
--- Tabela do sinistro: id, descrição (batida, furto, ...) e valor que ele agrega 
--- ao seguro
+-- Tabela do sinistro: id, descrição (batida, furto, ...), valor ($$) e o seguro 
+-- que se relaciona ao mesmo
 CREATE TABLE sinistro(
   id_do_sinistro SERIAL, -- PK
   descricao_do_sinistro VARCHAR(255),
-  valor_do_sinistro NUMERIC
+  valor_do_sinistro NUMERIC,
+  seguro INTEGER -- FK
 );
 
--- Tabela da perícia: id, cpf do perito, cnpj da oficina que foi realizada a 
--- pericia, chassi do automovel periciado, tipo de perda (total ou parcial),
--- relatório e nível da perda (%)
+-- Tabela da perícia: id, relatório, tipo de perda (total ou parcial), nível da perda (%),
+-- data de agendamento, data e hora do inicio e fim da pericia, id que referencia o sinistro,
+-- cpf do perito que realizou a pericia e cnpj da oficina onde foi realizada
 CREATE TABLE pericia(
   id_da_pericia SERIAL, -- PK
-  cpf_do_perito CHAR(11), -- FK
-  cnpj_da_oficina CHAR(14), -- FK
-  automovel_periciado CHAR(17), -- FK
-  tipo_de_perda VARCHAR(20),
   relatorio_da_pericia TEXT,
-  nivel_da_perda INTEGER
+  tipo_de_perda VARCHAR(20),
+  nivel_da_perda INTEGER,
+  agendamento_da_pericia DATE,
+  inicio_da_pericia TIMESTAMP,
+  fim_da_pericia TIMESTAMP,
+  sinistro INTEGER, -- FK
+  perito CHAR(11), -- FK
+  oficina CHAR(14) -- FK
 );
 
--- Tabela do reparo: id, chassi do automovel reparado, cnpj da oficina onde foi
--- feito o reparo, id da pericia que levou ao reparo, descrição do sinistro que
--- vai ser reparado e a data e hora do reparo
+-- Tabela do reparo: id, data e hora do reparo e id da pericia que levou ao reparo
 CREATE TABLE reparo(
   id_do_reparo SERIAL, -- PK
-  automovel_reparado CHAR(17), -- FK
-  cnpj_da_oficina CHAR(14), -- FK
-  id_da_pericia INTEGER, -- FK
-  id_do_sinistro INTEGER, -- FK
-  data_do_reparo TIMESTAMP
+  data_do_reparo TIMESTAMP,
+  pericia INTEGER -- FK
 );
 
 
@@ -95,35 +92,25 @@ ALTER TABLE reparo ADD PRIMARY KEY (id_do_reparo);
 
 -- QUESTÃO 4
 
--- FK que referencia o chassi do automovel ao segurado
-ALTER TABLE segurado ADD CONSTRAINT segurado_automovel_segurado_fkey FOREIGN KEY (automovel_segurado) REFERENCES automovel(chassi_do_automovel);
+-- FK que referencia o segurado daquele seguro
+ALTER TABLE seguro ADD CONSTRAINT seguro_segurado_fkey FOREIGN KEY (segurado) REFERENCES segurado(cpf_do_segurado);
 
--- FK que referencia o id do seguro ao segurado
-ALTER TABLE segurado ADD CONSTRAINT segurado_id_do_seguro_fkey FOREIGN KEY (id_do_seguro) REFERENCES seguro(id_do_seguro);
+-- FK que referencia o seguro que o automovel possui
+ALTER TABLE seguro ADD CONSTRAINT seguro_automovel_fkey FOREIGN KEY (automovel) REFERENCES automovel(chassi_do_automovel);
 
--- FK que referencia o cnpj da oficina ao perito
-ALTER TABLE perito ADD CONSTRAINT perito_cnpj_da_oficina_fkey FOREIGN KEY (cnpj_da_oficina) REFERENCES oficina(cnpj_da_oficina);
+-- FK que referencia o seguro que cobre o sinistro
+ALTER TABLE sinistro ADD CONSTRAINT sinistro_seguro_fkey FOREIGN KEY (seguro) REFERENCES seguro(id_do_seguro);
+
+ALTER TABLE pericia ADD CONSTRAINT pericia_sinistro_fkey FOREIGN KEY (sinistro) REFERENCES sinistro(id_do_sinistro);
 
 -- FK que referencia o cpf do perito a pericia
-ALTER TABLE pericia ADD CONSTRAINT pericia_cpf_do_perito_fkey FOREIGN KEY (cpf_do_perito) REFERENCES perito(cpf_do_perito);
+ALTER TABLE pericia ADD CONSTRAINT pericia_perito_fkey FOREIGN KEY (perito) REFERENCES perito(cpf_do_perito);
 
 -- FK que referencia o cnpj da oficina a pericia
-ALTER TABLE pericia ADD CONSTRAINT pericia_cnpj_da_oficina_fkey FOREIGN KEY (cnpj_da_oficina) REFERENCES oficina(cnpj_da_oficina);
-
--- FK que referencia o chassi do automovel a pericia
-ALTER TABLE pericia ADD CONSTRAINT pericia_automovel_periciado_fkey FOREIGN KEY (automovel_periciado) REFERENCES automovel(chassi_do_automovel);
-
--- FK que referencia o chassi do automovel ao reparo
-ALTER TABLE reparo ADD CONSTRAINT reparo_automovel_reparado_fkey FOREIGN KEY (automovel_reparado) REFERENCES automovel(chassi_do_automovel);
-
--- FK que referencia o cnpj da oficina ao reparo
-ALTER TABLE reparo ADD CONSTRAINT reparo_cnpj_da_oficina_fkey FOREIGN KEY (cnpj_da_oficina) REFERENCES oficina(cnpj_da_oficina);
+ALTER TABLE pericia ADD CONSTRAINT pericia_oficina_fkey FOREIGN KEY (oficina) REFERENCES oficina(cnpj_da_oficina);
 
 -- FK que referencia o id da pericia ao reparo
-ALTER TABLE reparo ADD CONSTRAINT reparo_id_da_pericia_fkey FOREIGN KEY (id_da_pericia) REFERENCES pericia(id_da_pericia);
-
--- FK que referencia o sinistro ao reparo
-ALTER TABLE reparo ADD CONSTRAINT reparo_id_do_sinistro_fkey FOREIGN KEY (id_do_sinistro) REFERENCES sinistro(id_do_sinistro);
+ALTER TABLE reparo ADD CONSTRAINT reparo_pericia_fkey FOREIGN KEY (pericia) REFERENCES pericia(id_da_pericia);
 
 
 
@@ -131,15 +118,13 @@ ALTER TABLE reparo ADD CONSTRAINT reparo_id_do_sinistro_fkey FOREIGN KEY (id_do_
 -- Os atributos NOT NULL deveriam ser as chaves primárias e estrangeiras:
 
 -- Na tabela automovel: chassi_do_automovel (PK)
--- Na tabela segurado: cpf_do_segurado (PK), automovel_segurado (FK) e id_do_seguro (FK)
--- Na tabela perito: cpf_do_perito (PK) e cnpj_da_oficina (FK)
+-- Na tabela segurado: cpf_do_segurado (PK)
+-- Na tabela perito: cpf_do_perito (PK)
 -- Na tabela oficina: cnpj_da_oficina (PK)
--- Na tabela seguro: id_do_seguro (PK)
--- Na tabela sinistro: id_do_sinistro (PK)
--- Na tabela pericia: id_da_pericia (PK), cpf_do_perito (FK), cnpj_da_oficina (FK),
--- e automovel_periciado (FK)
--- Na tabela reparo: id_do_reparo (PK), automovel_reparado (FK), cnpj_da_oficina (FK),
--- id_da_pericia (FK) e descricao_do_sinistro
+-- Na tabela seguro: id_do_seguro (PK), segurado (FK) e automovel (FK)
+-- Na tabela sinistro: id_do_sinistro (PK) e seguro (FK)
+-- Na tabela pericia: id_da_pericia (PK), sinistro (FK), perito (FK) e oficina (FK)
+-- Na tabela reparo: id_do_reparo (PK), pericia (FK)
 
 
 
@@ -148,12 +133,12 @@ ALTER TABLE reparo ADD CONSTRAINT reparo_id_do_sinistro_fkey FOREIGN KEY (id_do_
 
 DROP TABLE reparo;
 DROP TABLE pericia;
+DROP TABLE sinistro;
 DROP TABLE perito;
 DROP TABLE oficina;
-DROP TABLE sinistro;
-DROP TABLE segurado;
 DROP TABLE seguro;
 DROP TABLE automovel;
+DROP TABLE segurado;
 
 
 
@@ -161,76 +146,73 @@ DROP TABLE automovel;
 -- Criação de tabelas com suas respectivas chaves primárias e estrangeiras
 
 CREATE TABLE automovel(
-  chassi_do_automovel CHAR(17) NOT NULL PRIMARY KEY, 
+  chassi_do_automovel CHAR(17) NOT  NULL PRIMARY KEY,
   placa_do_automovel CHAR(7),
   modelo_do_automovel VARCHAR(50),
   marca_do_automovel VARCHAR(50),
   ano_do_automovel INTEGER
 );
 
+CREATE TABLE segurado(
+  cpf_do_segurado CHAR(11) NOT  NULL PRIMARY KEY,
+  nome_do_segurado VARCHAR(255),
+  telefone_do_segurado VARCHAR(15),
+  endereco_do_segurado VARCHAR(255),
+  data_de_nascimento_do_segurado DATE
+);
+
+CREATE TABLE seguro(
+  id_do_seguro SERIAL NOT  NULL PRIMARY KEY,
+  tipo_de_plano_do_seguro VARCHAR(255),
+  valor_do_seguro NUMERIC,
+  data_de_inicio DATE,
+  data_de_termino DATE,
+  segurado CHAR(11),
+  automovel CHAR(17),
+  CONSTRAINT seguro_segurado_fkey FOREIGN KEY (segurado) REFERENCES segurado(cpf_do_segurado),
+  CONSTRAINT seguro_automovel_fkey FOREIGN KEY (automovel) REFERENCES automovel(chassi_do_automovel)
+);
+
+CREATE TABLE perito(
+  cpf_do_perito CHAR(11) NOT  NULL PRIMARY KEY,
+  nome_do_perito VARCHAR(255)
+);
+
 CREATE TABLE oficina(
-  cnpj_da_oficina CHAR(14) NOT NULL PRIMARY KEY,
+  cnpj_da_oficina CHAR(14) NOT  NULL PRIMARY KEY,
   nome_da_oficina VARCHAR(255),
   endereco_da_oficina VARCHAR(255)
 );
 
-CREATE TABLE seguro(
-  id_do_seguro SERIAL NOT NULL PRIMARY KEY,
-  tipo_de_plano_do_seguro VARCHAR(255),
-  valor_do_seguro NUMERIC
-);
-
 CREATE TABLE sinistro(
-  id_do_sinistro SERIAL NOT NULL PRIMARY KEY,
+  id_do_sinistro SERIAL NOT  NULL PRIMARY KEY,
   descricao_do_sinistro VARCHAR(255),
-  valor_do_sinistro NUMERIC
-);
-
-CREATE TABLE segurado(
-  nome_do_segurado VARCHAR(255),
-  cpf_do_segurado CHAR(11) NOT NULL PRIMARY KEY,
-  telefone_do_segurado VARCHAR(15),
-  endereco_do_segurado VARCHAR(255),
-  data_de_nascimento_do_segurado DATE,
-  automovel_segurado CHAR(17) NOT NULL,
-  id_do_seguro INTEGER NOT NULL,
-  data_de_vinculo DATE,
-  data_de_termino DATE,
-  CONSTRAINT segurado_automovel_segurado_fkey FOREIGN KEY (automovel_segurado) REFERENCES automovel(chassi_do_automovel),
-  CONSTRAINT segurado_id_do_seguro_fkey FOREIGN KEY (id_do_seguro) REFERENCES seguro(id_do_seguro)
-);
-
-CREATE TABLE perito(
-  cpf_do_perito CHAR(11) NOT NULL PRIMARY KEY,
-  nome_do_perito VARCHAR(255),
-  cnpj_da_oficina CHAR(14) NOT NULL,
-  CONSTRAINT perito_cnpj_da_oficina_fkey FOREIGN KEY (cnpj_da_oficina) REFERENCES oficina(cnpj_da_oficina)
+  valor_do_sinistro NUMERIC,
+  seguro INTEGER,
+  CONSTRAINT sinistro_seguro_fkey FOREIGN KEY (seguro) REFERENCES seguro(id_do_seguro)
 );
 
 CREATE TABLE pericia(
-  id_da_pericia SERIAL NOT NULL PRIMARY KEY,
-  cpf_do_perito CHAR(11) NOT NULL,
-  cnpj_da_oficina CHAR(14) NOT NULL,
-  automovel_periciado CHAR(17) NOT NULL,
-  tipo_de_perda VARCHAR(20),
+  id_da_pericia SERIAL NOT  NULL PRIMARY KEY,
   relatorio_da_pericia TEXT,
+  tipo_de_perda VARCHAR(20),
   nivel_da_perda INTEGER,
-  CONSTRAINT pericia_cpf_do_perito_fkey FOREIGN KEY (cpf_do_perito) REFERENCES perito(cpf_do_perito),
-  CONSTRAINT pericia_cnpj_da_oficina_fkey FOREIGN KEY (cnpj_da_oficina) REFERENCES oficina(cnpj_da_oficina),
-  CONSTRAINT pericia_automovel_periciado_fkey FOREIGN KEY (automovel_periciado) REFERENCES automovel(chassi_do_automovel)
+  agendamento_da_pericia DATE,
+  inicio_da_pericia TIMESTAMP,
+  fim_da_pericia TIMESTAMP,
+  sinistro INTEGER,
+  perito CHAR(11),
+  oficina CHAR(14),
+  CONSTRAINT pericia_sinistro_fkey FOREIGN KEY (sinistro) REFERENCES sinistro(id_do_sinistro),
+  CONSTRAINT pericia_perito_fkey FOREIGN KEY (perito) REFERENCES perito(cpf_do_perito),
+  CONSTRAINT pericia_oficina_fkey FOREIGN KEY (oficina) REFERENCES oficina(cnpj_da_oficina)
 );
 
 CREATE TABLE reparo(
-  id_do_reparo SERIAL NOT NULL PRIMARY KEY,
-  automovel_reparado CHAR(17) NOT NULL,
-  cnpj_da_oficina CHAR(14) NOT NULL,
-  id_da_pericia INTEGER NOT NULL,
-  id_do_sinistro INTEGER NOT NULL,
+  id_do_reparo SERIAL NOT  NULL PRIMARY KEY,
   data_do_reparo TIMESTAMP,
-  CONSTRAINT reparo_automovel_reparado_fkey FOREIGN KEY (automovel_reparado) REFERENCES automovel(chassi_do_automovel),
-  CONSTRAINT reparo_cnpj_da_oficina_fkey FOREIGN KEY (cnpj_da_oficina) REFERENCES oficina(cnpj_da_oficina),
-  CONSTRAINT reparo_id_da_pericia_fkey FOREIGN KEY (id_da_pericia) REFERENCES pericia(id_da_pericia),
-  CONSTRAINT reparo_id_do_sinistro_fkey FOREIGN KEY (id_do_sinistro) REFERENCES sinistro(id_do_sinistro)
+  pericia INTEGER,
+  CONSTRAINT reparo_pericia_fkey FOREIGN KEY (pericia) REFERENCES pericia(id_da_pericia)
 );
 
 
@@ -240,14 +222,15 @@ CREATE TABLE reparo(
 
 DROP TABLE reparo;
 DROP TABLE pericia;
-DROP TABLE perito;
-DROP TABLE segurado;
 DROP TABLE sinistro;
-DROP TABLE seguro;
+DROP TABLE perito;
 DROP TABLE oficina;
+DROP TABLE seguro;
+DROP TABLE segurado;
 DROP TABLE automovel;
 
 
 
 -- QUESTÃO 10: SUGESTÕES DE TABELAS
--- Criaria uma tabela para guardar informações que definem o preço do seguro
+-- Criaria uma tabela para guardar informações que definem o preço do seguro,
+-- que definem os tipos de sinistro, ...
