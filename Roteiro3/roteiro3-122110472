@@ -1,0 +1,68 @@
+CREATE TABLE farmacia (
+    id SERIAL,
+    nome VARCHAR(60),
+    tipo CHAR(1), -- Sede ou Filial
+    bairro,
+    cidade,
+    estado,
+    gerente CHAR(11) --FK func
+);
+
+-- add constraint pra não permitir farmacias no mesmo bairro
+-- add constraint para permitir apenas func que sejam adm ou famarceuticos como gerentes
+-- add restrição sede (apenas uma)
+-- ALTER TABLE farmacia ADD CONSTRAINT tipo_chk CHECK (tipo IN ('S', 'F'));
+
+
+CREATE TABLE funcionario (
+    cpf CHAR(11),
+    nome VARCHAR(255)
+    cargo CHAR(1), -- Farmaceutico, Vendedor, Entregador, Caixa ou Administrador
+    farmacia_id INTEGER
+);
+
+-- ALTER TABLE funcionario ADD CONSTRAINT cargo_chk CHECK (cargo IN ('F', 'V', 'E', 'C', 'A'));
+-- Não deve ser possivel excluir um func vinculado a uma venda
+
+
+CREATE TABLE medicamentos (
+    nome VARCHAR(100),
+    receita BOOLEAN
+);
+
+-- Não deve ser possivel excluir um medicamento vinculado a uma venda
+
+CREATE TABLE vendas (
+    id  SERIAL,
+    medicamento_id INTEGER,
+    cliente_cpf CHAR(11),
+    vendedor_cpf CHAR(11), -- FK func
+
+);
+
+-- add constraint: apenas func vendedor pode realizar uma venda
+
+CREATE TABLE entregas (
+    id SERIAL,
+    entregador CHAR(11), -- FK func
+    enderecos_cliente_id INTEGER
+);
+
+-- add constraint para permitir apenas func do cargo entregador
+
+CREATE TABLE clientes (
+    id SERIAL,
+    nome VARCHAR(255),
+    data_nasc DATE,
+
+);
+
+CREATE TABLE enderecos_cliente (
+    cliente_cpf INTEGER,
+    bairro,
+    cidade,
+    estado,
+    tipo -- Residencia, Trabalho ou Outro
+);
+
+-- ALTER TABLE endereco ADD CONSTRAINT tipo_chk CHECK (cargo IN ('R', 'T', 'O'));
