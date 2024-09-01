@@ -1,6 +1,6 @@
 # Atividades da Disciplina de Banco de Dados
 
-Este repositório contém as atividades desenvolvidas durante a disciplina de Banco de Dados I no período 24.1.
+Este repositório contém as atividades desenvolvidas durante a disciplina de Banco de Dados I no período 24.1. A disciplina aborda conceitos fundamentais de modelagem de dados, álgebra relacional, SQL, e Sistemas de Gerenciamento de Banco de Dados (SGBDs).
 
 ## Objetivos da Disciplina
 
